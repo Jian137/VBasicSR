@@ -727,7 +727,7 @@ class FTT(nn.Module):
                 # TODO 改为可变形卷积
                 hfi_porp = self.hfi_warp(hfi_prop, flow,mask)
                 hfi_ = self.ftta(bic, hfi, hfi)
-                hfi_prop = self.ftta(hfi_, hfi_prop, hfi_prop)
+                # hfi_prop = self.ftta(hfi_, hfi_prop, hfi_prop)
                 # TODO
 
             hfi_prop = torch.cat([hfi, hfi_prop], dim=1)
