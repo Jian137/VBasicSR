@@ -2,11 +2,11 @@ import cv2
 import numpy as np
 import torch
 import torch.nn.functional as F
-
+from pytorch_msssim import ssim, ms_ssim, SSIM, MS_SSIM
 from basicsr.metrics.metric_util import reorder_image, to_y_channel
 from basicsr.utils.color_util import rgb2ycbcr_pt
 from basicsr.utils.registry import METRIC_REGISTRY
-
+import numpy as np
 
 @METRIC_REGISTRY.register()
 def calculate_psnr(img, img2, crop_border, input_order='HWC', test_y_channel=False, **kwargs):
@@ -78,9 +78,38 @@ def calculate_psnr_pt(img, img2, crop_border, test_y_channel=False, **kwargs):
     img2 = img2.to(torch.float64)
 
     mse = torch.mean((img - img2)**2, dim=[1, 2, 3])
-    return 10. * torch.log10(1. / (mse + 1e-8))
+    return (10. * torch.log10(1. / (mse + 1e-8))).item()
+@METRIC_REGISTRY.register()
+def calculate_psnr_pt_2(img, img2, crop_border, test_y_channel=False, **kwargs):
+    """Calculate PSNR (Peak Signal-to-Noise Ratio) (PyTorch version).
 
+    Reference: https://en.wikipedia.org/wiki/Peak_signal-to-noise_ratio
 
+    Args:
+        img (Tensor): Images with range [0, 1], shape (n, 3/1, h, w).
+        img2 (Tensor): Images with range [0, 1], shape (n, 3/1, h, w).
+        crop_border (int): Cropped pixels in each edge of an image. These pixels are not involved in the calculation.
+        test_y_channel (bool): Test on Y channel of YCbCr. Default: False.
+
+    Returns:
+        float: PSNR result.
+    """
+
+    assert img.shape == img2.shape, (f'Image shapes are different: {img.shape}, {img2.shape}.')
+
+    if crop_border != 0:
+        img = img[:, :, crop_border:-crop_border, crop_border:-crop_border]
+        img2 = img2[:, :, crop_border:-crop_border, crop_border:-crop_border]
+
+    if test_y_channel:
+        img = rgb2ycbcr_pt(img, y_only=True)
+        img2 = rgb2ycbcr_pt(img2, y_only=True)
+
+    img = img.to(torch.float64)
+    img2 = img2.to(torch.float64)
+
+    mse = torch.mean((img - img2)**2, dim=[1, 2])
+    return (10. * torch.log10(1. / (mse + 1e-8))).item()
 @METRIC_REGISTRY.register()
 def calculate_ssim(img, img2, crop_border, input_order='HWC', test_y_channel=False, **kwargs):
     """Calculate SSIM (structural similarity).
@@ -164,8 +193,83 @@ def calculate_ssim_pt(img, img2, crop_border, test_y_channel=False, **kwargs):
     img2 = img2.to(torch.float64)
 
     ssim = _ssim_pth(img * 255., img2 * 255.)
-    return ssim
+    return ssim.item()
+@METRIC_REGISTRY.register()
+def calculate_ssim_pt_2(img, img2, crop_border, test_y_channel=False, **kwargs):
+    """Calculate SSIM (structural similarity) (PyTorch version).
 
+    ``Paper: Image quality assessment: From error visibility to structural similarity``
+
+    The results are the same as that of the official released MATLAB code in
+    https://ece.uwaterloo.ca/~z70wang/research/ssim/.
+
+    For three-channel images, SSIM is calculated for each channel and then
+    averaged.
+
+    Args:
+        img (Tensor): Images with range [0, 1], shape (n, 3/1, h, w).
+        img2 (Tensor): Images with range [0, 1], shape (n, 3/1, h, w).
+        crop_border (int): Cropped pixels in each edge of an image. These pixels are not involved in the calculation.
+        test_y_channel (bool): Test on Y channel of YCbCr. Default: False.
+
+    Returns:
+        float: SSIM result.
+    """
+
+    assert img.shape == img2.shape, (f'Image shapes are different: {img.shape}, {img2.shape}.')
+
+    if crop_border != 0:
+        img = img[:, :, crop_border:-crop_border, crop_border:-crop_border]
+        img2 = img2[:, :, crop_border:-crop_border, crop_border:-crop_border]
+
+    if test_y_channel:
+        img = rgb2ycbcr_pt(img, y_only=True)
+        img2 = rgb2ycbcr_pt(img2, y_only=True)
+
+    img = img.to(torch.float64).unsqueeze(0)
+    img2 = img2.to(torch.float64).unsqueeze(0)
+
+    ssim = _ssim_pth(img * 255., img2 * 255.)
+    return ssim.item()
+
+@METRIC_REGISTRY.register()
+def calculate_ssim_pt_py(img, img2, crop_border, test_y_channel=False, **kwargs):
+    """Calculate SSIM (structural similarity) (PyTorch version).
+
+    ``Paper: Image quality assessment: From error visibility to structural similarity``
+
+    The results are the same as that of the official released MATLAB code in
+    https://ece.uwaterloo.ca/~z70wang/research/ssim/.
+
+    For three-channel images, SSIM is calculated for each channel and then
+    averaged.
+
+    Args:
+        img (Tensor): Images with range [0, 1], shape (n, 3/1, h, w).
+        img2 (Tensor): Images with range [0, 1], shape (n, 3/1, h, w).
+        crop_border (int): Cropped pixels in each edge of an image. These pixels are not involved in the calculation.
+        test_y_channel (bool): Test on Y channel of YCbCr. Default: False.
+
+    Returns:
+        float: SSIM result.
+    """
+
+    assert img.shape == img2.shape, (f'Image shapes are different: {img.shape}, {img2.shape}.')
+
+    if crop_border != 0:
+        img = img[:, :, crop_border:-crop_border, crop_border:-crop_border]
+        img2 = img2[:, :, crop_border:-crop_border, crop_border:-crop_border]
+
+    if test_y_channel:
+        img = rgb2ycbcr_pt(img, y_only=True)
+        img2 = rgb2ycbcr_pt(img2, y_only=True)
+
+    img = img.to(torch.float64).unsqueeze(0)
+    img2 = img2.to(torch.float64).unsqueeze(0)
+
+    r_ssim = ssim(img,img2,data_range=1, size_average=False)
+    # ssim = _ssim_pth(img * 255., img2 * 255.)
+    return r_ssim.item()
 
 def _ssim(img, img2):
     """Calculate SSIM (structural similarity) for one channel images.

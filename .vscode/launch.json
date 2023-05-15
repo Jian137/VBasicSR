@@ -1,0 +1,128 @@
+{
+    // 使用 IntelliSense 了解相关属性。
+    // 悬停以查看现有属性的描述。
+    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "name": "IMDNtrainPD",
+            "type": "python",
+            "request": "launch",
+            "program": "basicsr/train.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args":["-opt","options/train/MSR/train_EDSR_Lx2.yml"]
+        },
+        {
+            "name": "BasicvsrPPx2train",
+            "type": "python",
+            "request": "launch",
+            "program": "basicsr/train.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env":{"CUDA_VISIBLE_DEVICES":"1"},
+            "args":["-opt","${file}"]
+        },
+        {
+            "name": "0卡训练",
+            "type": "python",
+            "request": "launch",
+            "program": "basicsr/train.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env":{"CUDA_VISIBLE_DEVICES":"0"},
+            "args":["-opt","${file}"]
+        },
+        {
+            "name": "1卡训练",
+            "type": "python",
+            "request": "launch",
+            "program": "basicsr/train.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env":{"CUDA_VISIBLE_DEVICES":"1"},
+            "args":["-opt","${file}"]
+        },
+        {
+            "name": "2卡训练",
+            "type": "python",
+            "request": "launch",
+            "program": "basicsr/train.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env":{"CUDA_VISIBLE_DEVICES":"2"},
+            "args":["-opt","${file}"]
+        },
+        {
+            "name": "1卡测试",
+            "type": "python",
+            "request": "launch",
+            "program": "basicsr/test.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env":{"CUDA_VISIBLE_DEVICES":"1"},
+            "args":["-opt","${file}"]
+        },
+        {
+            "name": "BasicvsrPPx2trainT1",
+            "type": "python",
+            "request": "launch",
+            "program": "basicsr/train.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env":{"CUDA_VISIBLE_DEVICES":"0"},
+            "args":["-opt","options/train/MSR/train_BasicVSRPP_x2T1.yml"]
+        },
+        {
+            "name": "BasicvsrPPx2trainPD",
+            "type": "python",
+            "request": "launch",
+            "program": "basicsr/train.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env":{"CUDA_VISIBLE_DEVICES":"0"},
+            "args":["-opt","options/train/MSR/train_BasicVSRPP_x2PD.yml"]
+        },
+        {
+            "name": "BasicvsrPPx2trainT2",
+            "type": "python",
+            "request": "launch",
+            "program": "basicsr/train.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env":{"CUDA_VISIBLE_DEVICES":"0"},
+            "args":["-opt","options/train/MSR/train_BasicVSRPP_x2T2.yml"]
+        },
+        {
+            "name": "BasicvsrPPx2testT1",
+            "type": "python",
+            "request": "launch",
+            "program": "basicsr/test.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env":{"CUDA_VISIBLE_DEVICES":"0"},
+            "args":["-opt","options/test/MSR/test_BasicVSRPP_x2T1.yml"]
+        },
+        {
+            "name": "BasicvsrPPx2test",
+            "type": "python",
+            "request": "launch",
+            "program": "basicsr/test.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env":{"CUDA_VISIBLE_DEVICES":"1"},
+            "args":["-opt","${file}"]
+        },
+        {
+            "name": "BasicvsrPPMMAx2trainPD",
+            "type": "python",
+            "request": "launch",
+            "program": "basicsr/train.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env":{"CUDA_VISIBLE_DEVICES":"0"},
+            "args":["-opt","options/train/MSR/train_BasicVSRPPMMA.yml"]
+        }
+    ]
+}

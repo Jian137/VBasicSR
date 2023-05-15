@@ -1,0 +1,111 @@
+# general settings
+name: train_IMDN_singelchannel_bank_stage2
+model_type: MSRMutilStageModel
+scale: 2
+num_gpu: 1  # set num_gpu: 0 for cpu mode
+manual_seed: 10
+# stage 2 只训练bank部分
+# dataset and data loader settings
+datasets:
+  train:
+    name: IXI_PD_train
+    type: PairedNpyDataset
+    dataroot_gt: ~/Datasets/IXI/IXI_HR/PD/train_slice
+    dataroot_lq: ~/Datasets/IXI/IXI_LR/bicubic_2x/PD/train_slice
+    # (for lmdb)
+    # dataroot_gt: datasets/DIV2K/DIV2K_train_HR_sub.lmdb
+    # dataroot_lq: datasets/DIV2K/DIV2K_train_LR_bicubic_X2_sub.lmdb
+    min: 0.0
+    max: 1.0
+    filename_tmpl: '{}'
+    io_backend:
+      type: disk
+      # (for lmdb)
+      # type: lmdb
+
+    gt_size: 240
+    use_hflip: true
+    use_rot: true
+
+    # data loader
+    num_worker_per_gpu: 6
+    batch_size_per_gpu: 32
+    dataset_enlarge_ratio: 1
+    prefetch_mode: ~
+
+  val:
+    name: IXI_PD_test
+    type: PairedNpyDataset
+    dataroot_gt: ~/Datasets/IXI/IXI_HR/PD/test_slice
+    dataroot_lq: ~/Datasets/IXI/IXI_LR/bicubic_2x/PD/test_slice
+    io_backend:
+      type: disk
+    min: 0.0
+    max: 1.0
+# network structures
+network_g:
+  type: IMDNV2
+  in_nc: 1
+  nf: 64
+  num_modules: 6
+  out_nc: 1
+  upscale: 2
+
+# path
+path:
+  pretrain_network_g: # experiments/train_IMDN_V2_stage1_10.28/models/net_g_300000.pth
+  strict_load_g: False
+  resume_state: experiments/train_IMDN_singelchannel_bank_stage2/training_states/28000.state
+
+# training settings
+train:
+  ema_decay: 0.999
+  optim_g:
+    type: Adam
+    lr: !!float 4e-4
+    weight_decay: 0
+    betas: [0.9, 0.99]
+  stage: 2
+  scheduler:
+    type: MultiStepLR
+    milestones: [20000,40000,60000,80000,100000,120000,140000,160000]
+    gamma: 0.5
+
+  total_iter: 300000
+  warmup_iter: -1  # no warm up
+
+  # losses
+  pixel_opt:
+    type: L1Loss
+    loss_weight: 1.0
+    reduction: mean
+
+# validation settings
+val:
+  val_freq: !!float 2e3
+  save_img: false
+  pbar: true
+  metrics:
+    psnr: # metric name, can be arbitrary
+      type: calculate_psnr_pt
+      crop_border: 2
+      test_y_channel: false
+    ssim: # metric name, can be arbitrary
+      type: calculate_ssim_pt
+      crop_border: 2
+      test_y_channel: false
+
+# logging settings
+logger:
+  print_freq: 100
+  save_checkpoint_freq: !!float 2e3
+  use_tb_logger: true
+  wandb:
+    project: ~
+    resume_id: ~
+
+# dist training settings
+dist_params:
+  backend: nccl
+  port: 29500
+auto_resume: True

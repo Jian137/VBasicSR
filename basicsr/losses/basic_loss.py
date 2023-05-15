@@ -5,6 +5,8 @@ from torch.nn import functional as F
 from basicsr.archs.vgg_arch import VGGFeatureExtractor
 from basicsr.utils.registry import LOSS_REGISTRY
 from .loss_util import weighted_loss
+from basicsr.metrics.psnr_ssim import calculate_ssim_pt_py
+
 
 _reduction_modes = ['none', 'mean', 'sum']
 
@@ -22,7 +24,20 @@ def mse_loss(pred, target):
 @weighted_loss
 def charbonnier_loss(pred, target, eps=1e-12):
     return torch.sqrt((pred - target)**2 + eps)
+@LOSS_REGISTRY.register()
+class SSIMLoss(nn.Module):
+    def __init__(self, loss_weight=1.0, reduction='mean'):
+        super(SSIMLoss, self).__init__()
+        if reduction not in ['none', 'mean', 'sum']:
+            raise ValueError(f'Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}')
 
+        self.loss_weight = loss_weight
+        self.reduction = reduction
+    def forward(self, pred, target, weight=None, **kwargs):
+        while(len(pred.shape)>4):
+            pred = pred.squeeze(0)
+            target = target.squeeze(0)
+        return torch.tensor(self.loss_weight*(1-calculate_ssim_pt_py(pred,target,0))),None
 
 @LOSS_REGISTRY.register()
 class L1Loss(nn.Module):
