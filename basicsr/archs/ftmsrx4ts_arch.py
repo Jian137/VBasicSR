@@ -126,7 +126,7 @@ class PixelShufflePack(nn.Module):
         x = F.pixel_shuffle(x, self.scale_factor)
         return x
 
-#@ARCH_REGISTRY.register()
+@ARCH_REGISTRY.register()
 class FTMSRx4(nn.Module):
     """BasicVSR network structure for video super-resolution.
 
