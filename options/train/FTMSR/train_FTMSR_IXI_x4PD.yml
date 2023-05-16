@@ -58,7 +58,7 @@ network_g:
 path:
   pretrain_network_g: experiments/train_FTVSR_IXIPD_x3_norm/models/net_g_40000.pth
   strict_load_g: false
-  resume_state: #experiments/train_BasicVSRSS4MSR_IXIT1_x2_norm/training_states/140000.state
+  resume_state: experiments/train_FTMSR_IXIPD_x4_norm/training_states/80000.state
 
 # training settings
 train:

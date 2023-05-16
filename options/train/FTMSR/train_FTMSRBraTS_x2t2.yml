@@ -1,5 +1,5 @@
 # general settings
-name: train_FTMSR_BraTS_flair_x2_t15
+name: train_FTMSR_BraTS_t2_x2_t15
 model_type: VideoRecurrentModel2
 scale: 2
 num_gpu: 1  # official: 8 GPUs
@@ -8,10 +8,10 @@ manual_seed: 0
 # dataset and data loader settings
 datasets:
   train:
-    name: BraTS_flair_x2
+    name: BraTS_t2_x2
     type: VideoNpyRecurrentDataset
-    dataroot_gt: /mnt/zlz/Dataset/BraTS18/BraTS_HR/flair/train_slice_video
-    dataroot_lq: /mnt/zlz/Dataset/BraTS18/BraTS_LR/bicubic_2x/flair/train_slice_video/
+    dataroot_gt: /mnt/zlz/Dataset/BraTS18/BraTS_HR/t2/train_slice_video
+    dataroot_lq: /mnt/zlz/Dataset/BraTS18/BraTS_LR/bicubic_2x/t2/train_slice_video/
     meta_info_file: basicsr/data/meta_info/meta_info_BraTS18_train_GT.txt
     test_mode: False
     io_backend:
@@ -31,10 +31,10 @@ datasets:
     prefetch_mode: ~
 
   val:
-    name: BraTS_flair_x2_test
+    name: BraTS_t2_x2_test
     type: VideoNPYRecurrentTestDataset
-    dataroot_gt: /mnt/zlz/Dataset/BraTS18/BraTS_HR/flair/test_slice_video_split_2
-    dataroot_lq: /mnt/zlz/Dataset/BraTS18/BraTS_LR/bicubic_2x/flair/test_slice_video_split_2
+    dataroot_gt: /mnt/zlz/Dataset/BraTS18/BraTS_HR/t2/test_slice_video_split_2
+    dataroot_lq: /mnt/zlz/Dataset/BraTS18/BraTS_LR/bicubic_2x/t2/test_slice_video_split_2
     meta_info_file: basicsr/data/meta_info/meta_info_BraTS18_test_split2_GT.txt
     cache_data: true
     io_backend:
@@ -44,7 +44,7 @@ datasets:
     padding: reflection # TODO需要修改
 # network structures
 network_g:
-  type: FTVSRIXIx2
+  type: FTMSRx2
   mid_channels: 64
   num_blocks: 60
   stride: 4
@@ -56,9 +56,9 @@ network_g:
 
 # path
 path:
-  pretrain_network_g: experiments/train_FTVSR_BraTS_flair_x2_t15_norm/models/net_g_35000.pth
+  pretrain_network_g: experiments/train_FTVSR_BraTS_t2_x2_t15_norm/models/net_g_25000.pth
   strict_load_g: false
-  resume_state: experiments/train_FTMSR_BraTS_flair_x2_t15/training_states/20000.state
+  resume_state: ~
 
 # training settings
 train:
