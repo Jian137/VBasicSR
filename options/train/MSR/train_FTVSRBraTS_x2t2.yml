@@ -33,9 +33,9 @@ datasets:
   val:
     name: BraTS_t2_x2_test
     type: VideoNPYRecurrentTestDataset
-    dataroot_gt: /mnt/zlz/Dataset/BraTS18/BraTS_HR/t2/test_slice_video
-    dataroot_lq: /mnt/zlz/Dataset/BraTS18/BraTS_LR/bicubic_2x/t2/test_slice_video
-    meta_info_file: basicsr/data/meta_info/meta_info_BraTS18_test_GT.txt
+    dataroot_gt: /mnt/zlz/Dataset/BraTS18/BraTS_HR/t2/test_slice_video_split_2
+    dataroot_lq: /mnt/zlz/Dataset/BraTS18/BraTS_LR/bicubic_2x/t2/test_slice_video_split_2
+    meta_info_file: basicsr/data/meta_info/meta_info_BraTS18_test_split2_GT.txt
     cache_data: true
     io_backend:
       type: disk

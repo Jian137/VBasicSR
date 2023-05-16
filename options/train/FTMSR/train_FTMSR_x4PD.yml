@@ -1,23 +1,23 @@
 # general settings
-name: train_FTVSR_BraTS_t1_x2_t15_norm
+name: train_FTMSR_IXIPD_x4_norm
 model_type: VideoRecurrentModel2
-scale: 2
+scale: 4
 num_gpu: 1  # official: 8 GPUs
 manual_seed: 0
 
 # dataset and data loader settings
 datasets:
   train:
-    name: BraTS_t1_x2
+    name: IXI_PD_X4
     type: VideoNpyRecurrentDataset
-    dataroot_gt: ~/Datasets/BraTS18/BraTS_HR/t1/train_slice_video
-    dataroot_lq: ~/Datasets/BraTS18/BraTS_LR/bicubic_2x/t1/train_slice_video/
-    meta_info_file: basicsr/data/meta_info/meta_info_BraTS18_train_GT.txt
+    dataroot_gt: ~/Datasets/IXI/IXI_HR/PD/train_slice_video_norm
+    dataroot_lq: ~/Datasets/IXI/IXI_LR/bicubic_4x/PD/train_slice_video_norm
+    meta_info_file: basicsr/data/meta_info/meta_info_IXIPDtrain_GT.txt
     test_mode: False
     io_backend:
       type: disk
     max: 1.0
-    num_frame: 15
+    num_frame: 7
     gt_size: 160
     interval_list: [1]
     random_reverse: false
@@ -25,17 +25,17 @@ datasets:
     use_rot: false
     #TODO 暂时关闭
     # data loader
-    num_worker_per_gpu: 3
+    num_worker_per_gpu: 6
     batch_size_per_gpu: 1
     dataset_enlarge_ratio: 1
     prefetch_mode: ~
 
   val:
-    name: BraTS_t1_x2_test
+    name: IXI_PD_X4_test
     type: VideoNPYRecurrentTestDataset
-    dataroot_gt: ~/Datasets/BraTS18/BraTS_HR/t1/test_slice_video_split_2
-    dataroot_lq: ~/Datasets/BraTS18/BraTS_LR/bicubic_2x/t1/test_slice_video_split_2
-    meta_info_file: basicsr/data/meta_info/meta_info_BraTS18_test_split2_GT.txt
+    dataroot_gt: ~/Datasets/IXI/IXI_HR/PD/test_slice_video_norm
+    dataroot_lq: ~/Datasets/IXI/IXI_LR/bicubic_4x/PD/test_slice_video_norm
+    meta_info_file: basicsr/data/meta_info/meta_info_IXIPDtest_GT.txt
     cache_data: true
     io_backend:
       type: disk
@@ -44,7 +44,7 @@ datasets:
     padding: reflection # TODO需要修改
 # network structures
 network_g:
-  type: FTVSRIXIx2
+  type: FTMSRx4
   mid_channels: 64
   num_blocks: 60
   stride: 4
@@ -56,9 +56,9 @@ network_g:
 
 # path
 path:
-  pretrain_network_g: experiments/train_FTVSR_IXIT2_x2_t15_norm/models/net_g_50000.pth
+  pretrain_network_g: experiments/train_FTVSR_IXIPD_x3_norm/models/net_g_40000.pth
   strict_load_g: false
-  resume_state: experiments/train_FTVSR_BraTS_t1_x2_t15_norm/training_states/10000.state
+  resume_state: #experiments/train_BasicVSRSS4MSR_IXIT1_x2_norm/training_states/140000.state
 
 # training settings
 train:
@@ -85,11 +85,6 @@ train:
     type: CharbonnierLoss
     loss_weight: 1.0
     reduction: mean
-  perceptual_opt:
-    type: SSIMLoss
-    loss_weight: 5.0
-    reduction: mean
-
 
 # validation settings
 val:
@@ -102,7 +97,7 @@ val:
       crop_border: 0
       test_y_channel: false
     ssim:
-      type: calculate_ssim_pt_py
+      type: calculate_ssim_pt_2
       crop_border: 0
       test_y_channel: false
 # logging settings
