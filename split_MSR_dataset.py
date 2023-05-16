@@ -2,10 +2,10 @@ import os
 from glob import glob
 import shutil
 from tqdm import tqdm
-gt_root = "/home/vipsl416-8-hujian/Datasets/BraTS18/BraTS_HR/t1/test_slice_video"
-gt_dest = "/home/vipsl416-8-hujian/Datasets/BraTS18/BraTS_HR/t1/test_slice_video_split_2"
-lq_root = "/home/vipsl416-8-hujian/Datasets/BraTS18/BraTS_LR/bicubic_2x/t1/test_slice_video"
-lq_dest = "/home/vipsl416-8-hujian/Datasets/BraTS18/BraTS_LR/bicubic_2x/t1/test_slice_video_split_2"
+gt_root = "/mnt/zlz/Dataset/BraTS18/BraTS_HR/flair/test_slice_video"
+gt_dest = "/mnt/zlz/Dataset/BraTS18/BraTS_HR/flair/test_slice_video_split_2"
+lq_root = "/mnt/zlz/Dataset/BraTS18/BraTS_LR/bicubic_2x/flair/test_slice_video"
+lq_dest = "/mnt/zlz/Dataset/BraTS18/BraTS_LR/bicubic_2x/flair/test_slice_video_split_2"
 
 keys = os.listdir(gt_root)
 
