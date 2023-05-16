@@ -127,7 +127,8 @@ class PixelShufflePack(nn.Module):
         return x
 
 @ARCH_REGISTRY.register()
-class FTMSRx4ts(nn.Module):
+class FTMSRx4s(nn.Module):
+    # 消融实验 S
     """BasicVSR network structure for video super-resolution.
 
     Frequency-temporal transformer
@@ -276,10 +277,10 @@ class FTMSRx4ts(nn.Module):
 
         # compute optical flow
         #flows_forward, flows_backward = self.compute_flow(lrs)# TODO 计算流 改成简单卷积
-        flows_forward, flows_backward,mask_forward,mask_backward = self.compute_offset(lrs)
+        flows_forward, flows_backward,mask_forward,mask_backward = self.compute_offset(lrs)# TODO del
         outputs = self.feat_extractor(lrs.view(-1,c,h,w)).view(n,t,-1,h,w)
-        outputs = torch.unbind(outputs,dim=1)
-        outputs = list(outputs)
+        outputs = torch.unbind(outputs,dim=1)# 切成元组
+        outputs = list(outputs)# 转换成列表
         keyframe_idx_forward = list(range(0, t, self.keyframe_stride))
         keyframe_idx_backward = list(range(t-1, 0, 0-self.keyframe_stride))
         # backward-time propgation
@@ -297,20 +298,20 @@ class FTMSRx4ts(nn.Module):
             lr_curr = lrs[:, i, :, :, :]
             lr_curr_feat = outputs[i]
             if i < t - 1:  # no warping required for the last timestep
-                flow = flows_backward[:, i, :, :, :]
-                mask = mask_backward[:,i,:,:,:]
+                flow = flows_backward[:, i, :, :, :]# TODO remove
+                mask = mask_backward[:,i,:,:,:]# TODO remove
                 # feat_prop = flow_warp(feat_prop, flow.permute(0, 2, 3, 1),padding_mode='border')
                 # TODO 改为可变形卷积
                 # feat_prop = torchvision.ops.deform_conv2d(x, offset, self.weight, self.bias, self.stride, self.padding,
                 #                              self.dilation, mask)
-                feat_prop = self.offset_warp(feat_prop,flow,mask)
+                feat_prop = self.offset_warp(feat_prop,flow,mask)# TODO remove
                 # refresh the location map
-                flow = F.adaptive_avg_pool2d(flow,(h//self.stride,w//self.stride))/self.stride
+                flow = F.adaptive_avg_pool2d(flow,(h//self.stride,w//self.stride))/self.stride # TODO remove
                 # location_update = flow_warp(location_update, flow.permute(0, 2, 3, 1),padding_mode='border',interpolation="nearest")# n , 2t , h , w
                 # TODO 改为可变形卷积
-                mask = F.adaptive_avg_pool2d(mask,(h//self.stride,w//self.stride))/self.stride
+                mask = F.adaptive_avg_pool2d(mask,(h//self.stride,w//self.stride))/self.stride # TODO remove
 
-                location_update = self.location_warp(location_update, flow,mask)
+                location_update = self.location_warp(location_update, flow,mask) # TODO remove
 
 
                 # set the real feature
@@ -484,6 +485,8 @@ class FTMSRx4ts(nn.Module):
         del sparse_feat_buffers_s2
         del sparse_feat_buffers_s3
         del index_feat_buffers_s1
+
+
 
 
         #frequency attention
@@ -730,12 +733,10 @@ class FTT(nn.Module):
                 # TODO 改为可变形卷积
                 hfi_prop = self.hfi_warp(hfi_prop, flow,mask)
 
-                # hfi_ = self.ftta(bic, hfi, hfi)
+                ## 改注意力 消融实验
+                hfi_ = self.ftta(bic, hfi, hfi) # 对于 Q,K,V
+                hfi_prop = hfi_
                 # hfi_prop = self.ftta(hfi_, hfi_prop, hfi_prop)
-
-
-                hfi_prop = self.ftta(bic, hfi_prop, hfi_prop)
-                hfi_ = self.ftta(hfi_prop,hfi, hfi)
                 # TODO
 
             hfi_prop = torch.cat([hfi, hfi_prop], dim=1)
@@ -764,10 +765,12 @@ class FTT(nn.Module):
 
                 # hfi_prop = self.ftta(bic, hfi, hfi_prop)
 
-                hfi_prop = self.ftta(bic, hfi_prop, hfi_prop)
-                hfi_ = self.ftta(hfi_prop,hfi, hfi)
-                # hfi_ = self.ftta(bic, hfi, hfi)
-                # hfi_prop = self.ftta(hfi_, hfi_prop, hfi_prop)
+                ### 区别地方？ 消融实验
+                hfi_ = self.ftta(bic, hfi, hfi)
+                hfi_prop = hfi_
+                #hfi_prop = self.ftta(hfi_, hfi_prop, hfi_prop)
+
+
 
             hfi_prop = torch.cat([hfi, hfi_prop], dim=1)
             hfi_prop = self.resblocks(hfi_prop)
@@ -1242,7 +1245,7 @@ if __name__ == "__main__":
     # input1 = torch.randn(32,1,240,240)
     # input2 = torch.randn(32,1,240,240)
     # print(model(input1,input2)[0].shape)
-    model = FTMSRx4()
+    model = FTVSRIXIx4()
     model = model.cuda()
     input1 = torch.rand(1,5,1,80,80).cuda()
     print(model(input1).shape)

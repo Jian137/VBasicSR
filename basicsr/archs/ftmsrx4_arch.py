@@ -11,10 +11,7 @@ from torchvision import models
 #from basicsr.ops.dcn import ModulatedDeformConvPack
 import sys
 sys.path.append("../")
-try:
-    from .dct import dct_layer, reverse_dct_layer, check_and_padding_imgs, remove_image_padding, resize_flow
-except:
-    from dct import dct_layer, reverse_dct_layer, check_and_padding_imgs, remove_image_padding, resize_flow
+from .dct import dct_layer, reverse_dct_layer, check_and_padding_imgs, remove_image_padding, resize_flow
 from basicsr.utils.registry import ARCH_REGISTRY
 #@BACKBONES.register_module()
 
@@ -127,7 +124,7 @@ class PixelShufflePack(nn.Module):
         return x
 
 @ARCH_REGISTRY.register()
-class FTMSRx4ts(nn.Module):
+class FTMSRx4(nn.Module):
     """BasicVSR network structure for video super-resolution.
 
     Frequency-temporal transformer
@@ -729,13 +726,8 @@ class FTT(nn.Module):
                 mask = mask_backward[:,i,:,:,:]
                 # TODO 改为可变形卷积
                 hfi_prop = self.hfi_warp(hfi_prop, flow,mask)
-
-                # hfi_ = self.ftta(bic, hfi, hfi)
-                # hfi_prop = self.ftta(hfi_, hfi_prop, hfi_prop)
-
-
-                hfi_prop = self.ftta(bic, hfi_prop, hfi_prop)
-                hfi_ = self.ftta(hfi_prop,hfi, hfi)
+                hfi_ = self.ftta(bic, hfi, hfi)
+                hfi_prop = self.ftta(hfi_, hfi_prop, hfi_prop)
                 # TODO
 
             hfi_prop = torch.cat([hfi, hfi_prop], dim=1)
@@ -763,11 +755,8 @@ class FTT(nn.Module):
                 hfi_prop = self.hfi_warp(hfi_prop, flow,mask )
 
                 # hfi_prop = self.ftta(bic, hfi, hfi_prop)
-
-                hfi_prop = self.ftta(bic, hfi_prop, hfi_prop)
-                hfi_ = self.ftta(hfi_prop,hfi, hfi)
-                # hfi_ = self.ftta(bic, hfi, hfi)
-                # hfi_prop = self.ftta(hfi_, hfi_prop, hfi_prop)
+                hfi_ = self.ftta(bic, hfi, hfi)
+                hfi_prop = self.ftta(hfi_, hfi_prop, hfi_prop)
 
             hfi_prop = torch.cat([hfi, hfi_prop], dim=1)
             hfi_prop = self.resblocks(hfi_prop)
@@ -1242,7 +1231,7 @@ if __name__ == "__main__":
     # input1 = torch.randn(32,1,240,240)
     # input2 = torch.randn(32,1,240,240)
     # print(model(input1,input2)[0].shape)
-    model = FTMSRx4()
+    model = FTVSR()
     model = model.cuda()
     input1 = torch.rand(1,5,1,80,80).cuda()
     print(model(input1).shape)

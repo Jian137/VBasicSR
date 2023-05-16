@@ -6,6 +6,8 @@ from mmcv.cnn import ConvModule
 from mmcv.runner import load_checkpoint
 import torchvision
 # from mmedit.models.common import (PixelShufflePack, ResidualBlockNoBN,flow_warp, make_layer)
+
+
 from mmedit.utils import get_root_logger
 from torchvision import models
 #from basicsr.ops.dcn import ModulatedDeformConvPack
@@ -16,9 +18,6 @@ try:
 except:
     from dct import dct_layer, reverse_dct_layer, check_and_padding_imgs, remove_image_padding, resize_flow
 from basicsr.utils.registry import ARCH_REGISTRY
-#@BACKBONES.register_module()
-
-
 
 def make_layer(block, num_blocks, **kwarg):
     """Make layers by stacking the same blocks.
@@ -125,9 +124,9 @@ class PixelShufflePack(nn.Module):
         x = self.upsample_conv(x)
         x = F.pixel_shuffle(x, self.scale_factor)
         return x
-
+#@BACKBONES.register_module()
 @ARCH_REGISTRY.register()
-class FTMSRx4ts(nn.Module):
+class FTMSRx2(nn.Module):
     """BasicVSR network structure for video super-resolution.
 
     Frequency-temporal transformer
@@ -151,7 +150,7 @@ class FTMSRx4ts(nn.Module):
 
     def __init__(self, mid_channels=64, num_blocks=60, stride=4, keyframe_stride=3,spynet_pretrained=None,
                        dct_kernel=(8,8), d_model=512, n_heads=8):
-
+        # dct_kernel dct patch大小？
         super().__init__()
 
         self.dct_kernel = dct_kernel
@@ -180,14 +179,12 @@ class FTMSRx4ts(nn.Module):
         # upsample
         self.fusion = nn.Conv2d(
             3 * mid_channels, mid_channels, 1, 1, 0, bias=True)
-        self.upsample1 = PixelShufflePack(
-            mid_channels, mid_channels, 2, upsample_kernel=3)
-        self.upsample2 = PixelShufflePack(
-            mid_channels, 64, 2, upsample_kernel=3)
+        #self.upsample1 = PixelShufflePack(mid_channels, mid_channels, 2, upsample_kernel=3)
+        self.upsample2 = PixelShufflePack(mid_channels, 64, 2, upsample_kernel=3)
         self.conv_hr = nn.Conv2d(64, 64, 3, 1, 1)
         self.conv_last = nn.Conv2d(64, 1, 3, 1, 1)# TODO 输出通道设置
         self.img_upsample = nn.Upsample(
-            scale_factor=4, mode='bilinear', align_corners=False)
+            scale_factor=2, mode='bilinear', align_corners=False)
         # activation function
         self.lrelu = nn.LeakyReLU(negative_slope=0.1, inplace=True)
 
@@ -277,8 +274,8 @@ class FTMSRx4ts(nn.Module):
         # compute optical flow
         #flows_forward, flows_backward = self.compute_flow(lrs)# TODO 计算流 改成简单卷积
         flows_forward, flows_backward,mask_forward,mask_backward = self.compute_offset(lrs)
-        outputs = self.feat_extractor(lrs.view(-1,c,h,w)).view(n,t,-1,h,w)
-        outputs = torch.unbind(outputs,dim=1)
+        outputs = self.feat_extractor(lrs.view(-1,c,h,w)).view(n,t,-1,h,w) # 1,3,64,256,256 特征图
+        outputs = torch.unbind(outputs,dim=1) # 拆成三帧的元组
         outputs = list(outputs)
         keyframe_idx_forward = list(range(0, t, self.keyframe_stride))
         keyframe_idx_backward = list(range(t-1, 0, 0-self.keyframe_stride))
@@ -290,12 +287,15 @@ class FTMSRx4ts(nn.Module):
         index_feat_buffers_s1 = []
         # index_feat_buffers_s2 = []
         # index_feat_buffers_s3 = []
-        feat_prop = lrs.new_zeros(n, self.mid_channels, h, w)
+        feat_prop = lrs.new_zeros(n, self.mid_channels, h, w) # 1,64,256,256 全0
         grid_y, grid_x = torch.meshgrid(torch.arange(0, h//self.stride), torch.arange(0, w//self.stride))
         location_update = torch.stack([grid_x,grid_y],dim=0).type_as(lrs).expand(n,-1,-1,-1)
+
+
+
         for i in range(t - 1, -1, -1):
-            lr_curr = lrs[:, i, :, :, :]
-            lr_curr_feat = outputs[i]
+            lr_curr = lrs[:, i, :, :, :] # lr图像
+            lr_curr_feat = outputs[i] # lr特征图
             if i < t - 1:  # no warping required for the last timestep
                 flow = flows_backward[:, i, :, :, :]
                 mask = mask_backward[:,i,:,:,:]
@@ -320,13 +320,16 @@ class FTMSRx4ts(nn.Module):
                 sparse_feat_buffer_s3 = torch.stack(sparse_feat_buffers_s3, dim=1)
                 index_feat_buffer_s1 = torch.stack(index_feat_buffers_s1, dim=1)
                 feat_prop = self.LTAM(lr_curr_feat,index_feat_buffer_s1,feat_prop,sparse_feat_buffer_s1,sparse_feat_buffer_s2,sparse_feat_buffer_s3,location_update)
+                # 以特征图为输入
+
 
                 # add the location map
                 if i in keyframe_idx_backward:
                     location_update = torch.cat([location_update,torch.stack([grid_x,grid_y],dim=0).type_as(lrs).expand(n,-1,-1,-1)],dim=1) # n , 2t , h , w
             feat_prop = torch.cat([lr_curr_feat,feat_prop], dim=1)
-            feat_prop = self.resblocks(feat_prop)
+            feat_prop = self.resblocks(feat_prop) #FFN？
             feat_buffers.append(feat_prop)
+
             if i in keyframe_idx_backward:
                 # cross-scale feature * 4
                 # bs * c * h * w --> # bs * (c*4*4) * (h//4*w//4)
@@ -469,7 +472,7 @@ class FTMSRx4ts(nn.Module):
             # upsampling given the backward and forward features
             out = torch.cat([outputs_back[i],lr_curr_feat,feat_prop], dim=1)
             out = self.lrelu(self.fusion(out))
-            out = self.lrelu(self.upsample1(out))
+            #out = self.lrelu(self.upsample1(out))
             out = self.lrelu(self.upsample2(out))
             out = self.lrelu(self.conv_hr(out))
             out = self.conv_last(out)
@@ -661,6 +664,7 @@ class ResidualBlocksWithInputConv(nn.Module):
 
 
 class FTT(nn.Module):
+    # frequency-time-transformer?
     """
     SR_imgs, (n, t, c, h, w)
     high_frequency_imgs, (n, t, c, h, w)
@@ -671,8 +675,8 @@ class FTT(nn.Module):
     def __init__(self, dct_kernel=(8,8), d_model=512, n_heads=8,flow_channel=2):
         super().__init__()
         self.dct_kernel = dct_kernel
-        self.dct = dct_layer(in_c=1, h=dct_kernel[0], w=dct_kernel[1])# TODO 修改输入通道设置
-        self.rdct = reverse_dct_layer(out_c=1, h=dct_kernel[0], w=dct_kernel[1])# TODO 修改输出通道设置
+        self.dct = dct_layer(in_c=1, h=dct_kernel[0], w=dct_kernel[1])# TODO 修改输入通道设置 dct 变换层
+        self.rdct = reverse_dct_layer(out_c=1, h=dct_kernel[0], w=dct_kernel[1])# TODO 修改输出通道设置 dct 逆变换层
 
         # TODO 通道修改
         input_channel = 192//3
@@ -693,7 +697,7 @@ class FTT(nn.Module):
     def forward(self, bicubic_imgs, high_frequency_imgs, flows, padiings, to_cpu=False):
         n,t,c,h,w = bicubic_imgs.shape
         padding_h, padding_w = padiings
-        flows_forward, flows_backward,mask_forward,mask_backward = flows
+        flows_forward, flows_backward,mask_forward,mask_backward = flows # 偏移
         #resize flows
         if flows_forward is not None:
             flows_forward = resize_flow(flows_forward.view(-1, self.flow_channel, h, w), size_type='shape', sizes=(h//self.dct_kernel[0], w//self.dct_kernel[1]))
@@ -702,18 +706,23 @@ class FTT(nn.Module):
         flows_backward = flows_backward.view(n, t-1, self.flow_channel, h//self.dct_kernel[1], w//self.dct_kernel[1])
         # TODO flows形状
         #to frequency domain
-        dct_bic_0 = self.dct(bicubic_imgs.view(-1, c, h, w))
+
+        dct_bic_0 = self.dct(bicubic_imgs.view(-1, c, h, w)) # 转成频率 token?
+
         dct_bic = F.normalize(dct_bic_0.view(n*t, c*8*8, -1), dim=2).view(n*t, -1, h//8, w//8)
 
         dct_hfi_0 = self.dct(high_frequency_imgs.view(-1, c, h, w))
         dct_hfi = F.normalize(dct_hfi_0.view(n*t, c*8*8, -1), dim=2).view(n*t, -1, h//8, w//8)
+
         dct_hfi_0 = dct_hfi_0.view(n, t, -1, h//self.dct_kernel[0], w//self.dct_kernel[1])
+
 
 
         dct_bic_fea = self.feat_extractor(self.conv_layer1(dct_bic)).view(n, t, 512, h//self.dct_kernel[0], w//self.dct_kernel[1])
         dct_hfi_fea = self.feat_extractor(self.conv_layer1(dct_hfi)).view(n, t, 512, h//self.dct_kernel[0], w//self.dct_kernel[1])
 
         n,t,c,h,w = dct_hfi_fea.shape
+
 
 
         hfi_backward_list = []
@@ -729,13 +738,8 @@ class FTT(nn.Module):
                 mask = mask_backward[:,i,:,:,:]
                 # TODO 改为可变形卷积
                 hfi_prop = self.hfi_warp(hfi_prop, flow,mask)
-
-                # hfi_ = self.ftta(bic, hfi, hfi)
+                hfi_ = self.ftta(bic, hfi, hfi)
                 # hfi_prop = self.ftta(hfi_, hfi_prop, hfi_prop)
-
-
-                hfi_prop = self.ftta(bic, hfi_prop, hfi_prop)
-                hfi_ = self.ftta(hfi_prop,hfi, hfi)
                 # TODO
 
             hfi_prop = torch.cat([hfi, hfi_prop], dim=1)
@@ -763,11 +767,8 @@ class FTT(nn.Module):
                 hfi_prop = self.hfi_warp(hfi_prop, flow,mask )
 
                 # hfi_prop = self.ftta(bic, hfi, hfi_prop)
-
-                hfi_prop = self.ftta(bic, hfi_prop, hfi_prop)
-                hfi_ = self.ftta(hfi_prop,hfi, hfi)
-                # hfi_ = self.ftta(bic, hfi, hfi)
-                # hfi_prop = self.ftta(hfi_, hfi_prop, hfi_prop)
+                hfi_ = self.ftta(bic, hfi, hfi)
+                hfi_prop = self.ftta(hfi_, hfi_prop, hfi_prop)
 
             hfi_prop = torch.cat([hfi, hfi_prop], dim=1)
             hfi_prop = self.resblocks(hfi_prop)
@@ -1242,7 +1243,7 @@ if __name__ == "__main__":
     # input1 = torch.randn(32,1,240,240)
     # input2 = torch.randn(32,1,240,240)
     # print(model(input1,input2)[0].shape)
-    model = FTMSRx4()
-    model = model.cuda()
-    input1 = torch.rand(1,5,1,80,80).cuda()
+    model = FTVSRIXIx2()
+    model = model
+    input1 = torch.rand(1,3,1,256,256)
     print(model(input1).shape)
