@@ -1,5 +1,5 @@
 # general settings
-name: train_FTMSR_BraTS_t2_x2_t15
+name: train_FTMSR_BraTS_t2_x2_t7
 model_type: VideoRecurrentModel2
 scale: 2
 num_gpu: 1  # official: 8 GPUs
@@ -17,7 +17,7 @@ datasets:
     io_backend:
       type: disk
     max: 1.0
-    num_frame: 15
+    num_frame: 7
     gt_size: 160
     interval_list: [1]
     random_reverse: false
@@ -56,7 +56,7 @@ network_g:
 
 # path
 path:
-  pretrain_network_g: experiments/train_FTVSR_BraTS_t2_x2_t15_norm/models/net_g_25000.pth
+  pretrain_network_g: ~
   strict_load_g: false
   resume_state: ~
 

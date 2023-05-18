@@ -56,7 +56,7 @@ network_g:
 
 # path
 path:
-  pretrain_network_g: experiments/train_FTVSR_BraTS_t1_x2_t15_norm/models/net_g_25000.pth
+  pretrain_network_g: ~
   strict_load_g: false
   resume_state: ~
 
