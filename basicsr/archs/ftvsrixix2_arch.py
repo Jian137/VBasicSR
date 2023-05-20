@@ -9,7 +9,7 @@ import torchvision
 
 
 from mmedit.utils import get_root_logger
-from torchvision import models
+#from torchvision import models
 #from basicsr.ops.dcn import ModulatedDeformConvPack
 import sys
 sys.path.append("../")

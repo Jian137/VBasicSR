@@ -9,7 +9,7 @@ import torchvision
 # from mmedit.models.common import (PixelShufflePack, ResidualBlockNoBN, make_layer)
 # from mmedit.models.registry import BACKBONES
 from mmedit.utils import get_root_logger
-from torchvision import models
+#from torchvision import models
 #from basicsr.ops.dcn import ModulatedDeformConvPack
 import sys
 sys.path.append("../")

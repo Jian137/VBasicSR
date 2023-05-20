@@ -1,23 +1,27 @@
+# GENERATE TIME: Mon May 15 22:52:05 2023
+# CMD:
+# basicsr/train.py -opt /home/vipsl416-8-hujian/MSR/SR Code/BasicSR/options/train/FTMSR/train_FTMSR_x4PD.yml
+
 # general settings
-name: train_FTMSR_BraTS_t2_x2_t7
+name: train_FTMSR_base_IXIPD_x4_norm
 model_type: VideoRecurrentModel2
-scale: 2
+scale: 4
 num_gpu: 1  # official: 8 GPUs
 manual_seed: 0
 
 # dataset and data loader settings
 datasets:
   train:
-    name: BraTS_t2_x2
+    name: IXI_PD_X4
     type: VideoNpyRecurrentDataset
-    dataroot_gt: /mnt/zlz/Dataset/BraTS18/BraTS_HR/t2/train_slice_video
-    dataroot_lq: /mnt/zlz/Dataset/BraTS18/BraTS_LR/bicubic_2x/t2/train_slice_video/
-    meta_info_file: basicsr/data/meta_info/meta_info_BraTS18_train_GT.txt
+    dataroot_gt: ~/Datasets/IXI/IXI_HR/PD/train_slice_video_norm
+    dataroot_lq: ~/Datasets/IXI/IXI_LR/bicubic_4x/PD/train_slice_video_norm
+    meta_info_file: basicsr/data/meta_info/meta_info_IXIPDtrain_GT.txt
     test_mode: False
     io_backend:
       type: disk
     max: 1.0
-    num_frame: 7
+    num_frame: 5
     gt_size: 160
     interval_list: [1]
     random_reverse: false
@@ -25,17 +29,17 @@ datasets:
     use_rot: false
     #TODO 暂时关闭
     # data loader
-    num_worker_per_gpu: 3
+    num_worker_per_gpu: 6
     batch_size_per_gpu: 1
     dataset_enlarge_ratio: 1
     prefetch_mode: ~
 
   val:
-    name: BraTS_t2_x2_test
+    name: IXI_PD_X4_test
     type: VideoNPYRecurrentTestDataset
-    dataroot_gt: /mnt/zlz/Dataset/BraTS18/BraTS_HR/t2/test_slice_video_split_2
-    dataroot_lq: /mnt/zlz/Dataset/BraTS18/BraTS_LR/bicubic_2x/t2/test_slice_video_split_2
-    meta_info_file: basicsr/data/meta_info/meta_info_BraTS18_test_split2_GT.txt
+    dataroot_gt: ~/Datasets/IXI/IXI_HR/PD/test_slice_video_norm
+    dataroot_lq: ~/Datasets/IXI/IXI_LR/bicubic_4x/PD/test_slice_video_norm
+    meta_info_file: basicsr/data/meta_info/meta_info_IXIPDtest_GT.txt
     cache_data: true
     io_backend:
       type: disk
@@ -44,7 +48,7 @@ datasets:
     padding: reflection # TODO需要修改
 # network structures
 network_g:
-  type: FTMSRx2
+  type: FTMSRx4sbase
   mid_channels: 64
   num_blocks: 60
   stride: 4
@@ -56,7 +60,7 @@ network_g:
 
 # path
 path:
-  pretrain_network_g: experiments/train_FTMSR_BraTS_t1_x2_t15/models/net_g_35000.pth
+  pretrain_network_g: experiments/train_FTMSR_IXIPD_x4_norm/models/net_g_80000.pth
   strict_load_g: false
   resume_state: ~
 
@@ -85,11 +89,6 @@ train:
     type: CharbonnierLoss
     loss_weight: 1.0
     reduction: mean
-  perceptual_opt:
-    type: SSIMLoss
-    loss_weight: 5.0
-    reduction: mean
-
 
 # validation settings
 val:
@@ -102,7 +101,7 @@ val:
       crop_border: 0
       test_y_channel: false
     ssim:
-      type: calculate_ssim_pt_py
+      type: calculate_ssim_pt_2
       crop_border: 0
       test_y_channel: false
 # logging settings
