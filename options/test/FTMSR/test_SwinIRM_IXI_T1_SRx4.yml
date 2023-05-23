@@ -1,44 +1,26 @@
 # general settings
-name: train_SwinIRM_SRx3_IXI_T1
+name: test_SwinIR_SRx4_IXI_T1
 model_type: SwinIRModel
-scale: 3
+scale: 4
 num_gpu: auto
 manual_seed: 0
 
 # dataset and data loader settings
 datasets:
-  train:
-    name: IXI_T1_X3
-    type: PairedNpyDataset
-    dataroot_gt: ~/Datasets/IXI/IXI_HR/T1/train_slice/
-    dataroot_lq: ~/Datasets/IXI/IXI_LR/bicubic_3x/T1/train_slice
-    filename_tmpl: '{}'
-    io_backend:
-      type: disk
-    max: 1.0
-    gt_size: 192
-    use_hflip: true
-    use_rot: true
-
-    # data loader
-    num_worker_per_gpu: 6
-    batch_size_per_gpu: 4
-    dataset_enlarge_ratio: 1
-    prefetch_mode: ~
 
   val:
-    name: IXI_T1_X3_test
+    name: IXI_T1_X4_test
     type: PairedNpyDataset
-    dataroot_gt: ~/Datasets/IXI/IXI_HR/T1/test_slice
-    dataroot_lq: ~/Datasets/IXI/IXI_LR/bicubic_3x/T1/test_slice
     max: 1.0
+    dataroot_gt: ~/Datasets/IXI/IXI_HR/T1/test_slice
+    dataroot_lq: ~/Datasets/IXI/IXI_LR/bicubic_4x/T1/test_slice
     io_backend:
       type: disk
 
 # network structures
 network_g:
   type: SwinIRM
-  upscale: 3
+  upscale: 4
   in_chans: 1
   img_size: 48
   window_size: 8
@@ -52,9 +34,9 @@ network_g:
 
 # path
 path:
-  pretrain_network_g: experiments/train_SwinIRM_SRx4_IXI_T1/models/net_g_90000.pth
+  pretrain_network_g: experiments/train_SwinIRM_SRx4_IXI_T1/models/net_g_150000.pth
   strict_load_g: false
-  resume_state: experiments/train_SwinIRM_SRx3_IXI_T1/training_states/65000.state
+  resume_state: ~
 
 # training settings
 train:
@@ -82,7 +64,8 @@ train:
 # validation settings
 val:
   val_freq: !!float 5e3
-  save_img: false
+  save_img: true
+  suffix: SwinIRM
   pbar: true
   metrics:
     psnr: # metric name, can be arbitrary
@@ -93,7 +76,6 @@ val:
       type: calculate_ssim
       crop_border: 0
       test_y_channel: false
-# logging settings
 # logging settings
 logger:
   print_freq: 100
