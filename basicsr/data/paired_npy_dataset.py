@@ -75,11 +75,15 @@ class PairedNpyDataset(data.Dataset):
 
         img_gt = npyfrompath(gt_path, float32=True,max=self.opt['max'])# TODO numpy
 
+        # TODO 临时处理
+        if len(img_gt.shape)==3:
+            img_gt = img_gt[:,:,0]
 
         lq_path = self.paths[index]['lq_path']
         #img_bytes = self.file_client.get(lq_path, 'lq')
         img_lq = npyfrompath(lq_path, float32=True,max=self.opt['max']) #TODO numpy
-
+        if len(img_lq.shape)==3:
+            img_lq=img_lq[:,:,0]
         # augmentation for training
         if self.opt['phase'] == 'train':
             gt_size = self.opt['gt_size']

@@ -54,7 +54,7 @@ network_g:
 path:
   pretrain_network_g: experiments/pretrained_models/SwinIR/001_classicalSR_DIV2K_s48w8_SwinIR-M_x4.pth
   strict_load_g: false
-  resume_state: experiments/train_SwinIRM_SRx4_IXI_PD/training_states/50000.state
+  resume_state: experiments/train_SwinIRM_SRx4_IXI_PD/training_states/235000.state
 
 # training settings
 train:
