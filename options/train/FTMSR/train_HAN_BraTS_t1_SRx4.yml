@@ -45,7 +45,7 @@ network_g:
 path:
   pretrain_network_g: ~
   strict_load_g: false
-  resume_state: ~
+  resume_state: experiments/train_HAN_SRx4_BraTS_t1/training_states/35000.state
 
 # training settings
 train:
@@ -77,7 +77,7 @@ val:
   pbar: true
   metrics:
     psnr: # metric name, can be arbitrary
-      type: calculate_psnr
+      type: calculate_psnr_2
       crop_border: 0
       test_y_channel: false
     ssim:
