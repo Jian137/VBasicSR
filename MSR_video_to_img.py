@@ -3,10 +3,10 @@ import shutil
 from glob import glob
 from tqdm import tqdm
 
-gt_root = "/home/vipsl416-8-hujian/Datasets/BraTS18/BraTS_HR/t2/train_slice_video"
-gt_dst = "/home/vipsl416-8-hujian/Datasets/BraTS18/BraTS_HR/t2/train_slice_image"
-lq_root = "/home/vipsl416-8-hujian/Datasets/BraTS18/BraTS_LR/bicubic_4x/t2/train_slice_video"
-lq_dst = "/home/vipsl416-8-hujian/Datasets/BraTS18/BraTS_LR/bicubic_4x/t2/train_slice_image"
+gt_root = "/home/vipsl416-8-hujian/Datasets/BraTS18/BraTS_HR/flair/train_slice_video"
+gt_dst = "/home/vipsl416-8-hujian/Datasets/BraTS18/BraTS_HR/flair/train_slice_image"
+lq_root = "/home/vipsl416-8-hujian/Datasets/BraTS18/BraTS_LR/bicubic_3x/flair/train_slice_video"
+lq_dst = "/home/vipsl416-8-hujian/Datasets/BraTS18/BraTS_LR/bicubic_3x/flair/train_slice_image"
 
 keys = os.listdir(gt_root)
 
