@@ -83,7 +83,7 @@ def calculate_psnr_2(img, img2, crop_border, input_order='HWC', test_y_channel=F
 
     mse = np.mean((img/255.0 - img2/255.0)**2)
 
-    return 10. * np.log10(1 / (mse+1e-8))
+    return 10. * np.log10(1.0 / (mse+1e-8))
 @METRIC_REGISTRY.register()
 def calculate_psnr_pt(img, img2, crop_border, test_y_channel=False, **kwargs):
     """Calculate PSNR (Peak Signal-to-Noise Ratio) (PyTorch version).
