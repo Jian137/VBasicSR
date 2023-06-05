@@ -38,7 +38,7 @@ datasets:
 # network structures
 network_g:
   type: HAN
-  scale: 4
+  scale: 3
 
 
 # path
