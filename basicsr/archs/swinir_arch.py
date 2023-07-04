@@ -8,7 +8,10 @@ import torch.nn as nn
 import torch.utils.checkpoint as checkpoint
 
 from basicsr.utils.registry import ARCH_REGISTRY
-from .arch_util import to_2tuple, trunc_normal_
+try:
+    from .arch_util import to_2tuple, trunc_normal_
+except:
+    from arch_util import to_2tuple,trunc_normal_
 
 
 def drop_path(x, drop_prob: float = 0., training: bool = False):
@@ -296,7 +299,9 @@ class SwinTransformerBlock(nn.Module):
             shifted_x = x
 
         # partition windows
+        # 划分成 8*8的windows
         x_windows = window_partition(shifted_x, self.window_size)  # nw*b, window_size, window_size, c
+        # 拉直成一维
         x_windows = x_windows.view(-1, self.window_size * self.window_size, c)  # nw*b, window_size*window_size, c
 
         # W-MSA/SW-MSA (to be compatible for testing on images whose shapes are the multiple of window size
@@ -690,7 +695,7 @@ class UpsampleOneStep(nn.Sequential):
         return flops
 
 
-@ARCH_REGISTRY.register()
+#@ARCH_REGISTRY.register()
 class SwinIR(nn.Module):
     r""" SwinIR
         A PyTorch impl of : `SwinIR: Image Restoration Using Swin Transformer`, based on Swin Transformer.
@@ -947,10 +952,10 @@ if __name__ == '__main__':
         embed_dim=60,
         num_heads=[6, 6, 6, 6],
         mlp_ratio=2,
-        upsampler='pixelshuffledirect')
+        upsampler='pixelshuffledirect').cuda()
     print(model)
     print(height, width, model.flops() / 1e9)
 
-    x = torch.randn((1, 3, height, width))
+    x = torch.randn((1, 3, 512, width)).cuda() #(1,3,264,184)
     x = model(x)
     print(x.shape)
